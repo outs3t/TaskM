@@ -1,45 +1,45 @@
-// pwa-init.js
+// pwa-init.js aggiornato
 
 // 1. Aggiunge dinamicamente il manifest
 (function() {
     if (!document.querySelector('link[rel="manifest"]')) {
         const link = document.createElement('link');
         link.rel = 'manifest';
-        link.href = 'manifest.json'; // assicurati sia il nome corretto
+        link.href = './manifest.json';
         document.head.appendChild(link);
+        console.log('Manifest aggiunto');
     }
 })();
 
-// 2. Registra il service worker
+// 2. Registra il service worker corretto
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js') // o il tuo file ESV
-            .then(reg => console.log('Service Worker registrato', reg))
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registrato', reg.scope))
             .catch(err => console.error('Errore SW:', err));
     });
 }
 
-// 3. Event listener per "beforeinstallprompt"
+// 3. Preparazione installazione PWA
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    console.log('PWA pronto per installazione');
-    // Qui puoi eventualmente mostrare un bottone custom per installare
-    // esempio: document.getElementById('installBtn').style.display = 'block';
+    console.log('PWA pronta per installazione');
 });
 
-// 4. Funzione per triggerare l'installazione
+// 4. Funzione per triggerare installazione
 function installPWA() {
     if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then(choice => {
-            if (choice.outcome === 'accepted') {
-                console.log('Utente ha installato la PWA');
-            } else {
-                console.log('Utente ha rifiutato');
-            }
+            console.log('Utente:', choice.outcome);
             deferredPrompt = null;
         });
     }
 }
+
+// 5. Trigger automatico per test mobile (opzionale)
+setTimeout(() => {
+    if (typeof installPWA === 'function') installPWA();
+}, 1500);
