@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TaskM — Installazione PWA</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#667eea">
+  <style>
+    body{font-family:system-ui,Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f4f6fb}
+    .card{background:white;padding:20px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.08);max-width:420px;text-align:center}
+    button{background:#667eea;color:#fff;border:none;padding:12px 18px;border-radius:10px;font-weight:700}
+    a{color:#667eea;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>TaskM — Installazione</h2>
+    <p>Questa pagina abilita l'installazione dell'app. Premi il pulsante per registrare il Service Worker e mostrare l'opzione di installazione.</p>
+    <div style="margin:14px 0">
+      <button id="registerBtn">Registra & Preparati</button>
+    </div>
+    <div id="msg"></div>
+    <p style="font-size:13px;margin-top:12px">Dopo la registrazione, apri <a href="./index.html">la app</a> o mantieni questa scheda aperta e tocca “Installa” quando richiesto.</p>
+  </div>
+
+<script>
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  // salva l'evento per poter mostrare il prompt su gesture
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('msg').textContent = '✅ L\'app è pronta per l\'installazione. Premi "Installa" quando compare o usa il pulsante qui sotto.';
+});
+
+document.getElementById('registerBtn').addEventListener('click', async () => {
+  // registra il SW
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('./sw.js');
+      document.getElementById('msg').textContent = 'Service Worker registrato. Interagisci con la pagina: ora dovrebbe comparire l\'opzione di installazione.';
+    } catch (err) {
+      document.getElementById('msg').textContent = 'Errore registrazione SW: ' + err;
+      console.error(err);
+    }
+  } else {
+    document.getElementById('msg').textContent = 'Service Worker non supportato nel tuo browser.';
+  }
+
+  // se abbiamo catturato beforeinstallprompt, mostriamo un pulsante per chiamarlo
+  if (deferredPrompt) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Installa TaskM';
+    btn.style.marginTop = '10px';
+    btn.onclick = async () => {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        document.getElementById('msg').textContent = 'Installazione accettata ✅';
+      } else {
+        document.getElementById('msg').textContent = 'Installazione rifiutata';
+      }
+      deferredPrompt = null;
+    };
+    document.querySelector('.card').appendChild(btn);
+  } else {
+    // istruzioni se browser non ha fired l'evento
+    document.getElementById('msg').textContent += ' (Se non vedi il prompt, prova a ricaricare la pagina dopo aver interagito o cancella i dati del sito).';
+  }
+});
+</script>
+</body>
+</html>
